@@ -98,7 +98,7 @@ public class ProcessEmailMessagePluginTests
     public void ProcessEmailMessagePlugin_IsInvokedWithCorrectOrderId_GivenByChatCompletionService(string prompt, string[] expectedOrderIds)
     {
         // Arrange
-        var generateEmailMessageMock = Substitute.For<IGenerateEmailMessageService>();
+        var generateEmailMessageMock = GetSpeakingMockGenerateEmailMessageService();
         var commitEmailMessageMock = Substitute.For<ICommitEmailMessageService>();
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
@@ -109,13 +109,15 @@ public class ProcessEmailMessagePluginTests
         generateEmailMessageMock
             .Received(1)
             .OrdersData(Arg.Is<string[]>(x => x.SequenceEqual(expectedOrderIds)), EmailAddress, EmailTopic);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default, default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default, default);
     }
 
     [TestCase(Prompt3)]
     public void ProcessEmailMessagePlugin_GivenQueryForAllOrders_IsInvokedQueryAllOrders(string prompt)
     {
         // Arrange
-        var generateEmailMessageMock = Substitute.For<IGenerateEmailMessageService>();
+        var generateEmailMessageMock = GetSpeakingMockGenerateEmailMessageService();
         var commitEmailMessageMock = Substitute.For<ICommitEmailMessageService>();
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
@@ -126,6 +128,8 @@ public class ProcessEmailMessagePluginTests
         generateEmailMessageMock
             .Received(1)
             .DataOfAllOrders(Arg.Is<string>(x => x.Equals(EmailAddress)), Arg.Is<string>(x => x.Equals(EmailTopic)));
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default,default,default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default,default);
     }
 
     [TestCase(NonRelatedPrompt1)]
@@ -133,7 +137,7 @@ public class ProcessEmailMessagePluginTests
     public void ProcessEmailMessagePlugin_GivenNonRelatedPrompt_IsInvokedWithNonRelated(string prompt)
     {
         // Arrange
-        var generateEmailMessageMock = Substitute.For<IGenerateEmailMessageService>();
+        var generateEmailMessageMock = GetSpeakingMockGenerateEmailMessageService();
         var commitEmailMessageMock = Substitute.For<ICommitEmailMessageService>();
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
@@ -144,5 +148,26 @@ public class ProcessEmailMessagePluginTests
         generateEmailMessageMock
             .Received(1)
             .UnrecognizedTypeOfRequest(Arg.Is<string>(x => x.Equals(EmailAddress)), Arg.Is<string>(x => x.Equals(EmailTopic)));
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default, default, default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default, default);
+    }
+
+    private static IGenerateEmailMessageService GetSpeakingMockGenerateEmailMessageService()
+    {
+        var generateEmailMessageMock = Substitute.For<IGenerateEmailMessageService>();
+        generateEmailMessageMock
+            .When(x => x.DataOfAllOrders(Arg.Any<string>(), Arg.Any<string>()))
+            .Do(x => TestContext.Out.WriteLine("uruchomiono generowanie wiadomości dt. wszystkich zamówień"));
+        generateEmailMessageMock
+            .When(x => x.OrdersData(Arg.Any<string[]>(), Arg.Any<string>(), Arg.Any<string>()))
+            .Do(x =>
+            {
+                TestContext.Out.WriteLine("uruchomiono generowanie wiadomości dt. zamówień: {0}",
+                    string.Join(", ", (string[])x.Args()[0]) );
+            });
+        generateEmailMessageMock
+            .When(x => x.UnrecognizedTypeOfRequest(Arg.Any<string>(), Arg.Any<string>()))
+            .Do(x => TestContext.Out.WriteLine("generowanie wiadomości dt. nierozpoznania charakteru zapytania"));
+        return generateEmailMessageMock;
     }
 }
