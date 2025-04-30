@@ -10,6 +10,7 @@ using NUnit.Framework;
 using Soneta.BI;
 using Soneta.Test.Helpers;
 using Geekout.AiWSoneta.BI;
+using System.Linq;
 
 namespace Geekout.AiWSoneta.Tests.BI;
 
@@ -18,16 +19,30 @@ public class BiPluginTest
     [Test]
     public void GetAreasConfidenceTest()
     {
-        var kernel = GetKernel();
-        var areas = BiPlugin.GetAreasConfidence(
-            "księgowość i finanse", BiPlugin.GetAreas(),
-            kernel);
-        areas.Result.Should().HaveCount(4);
-        var comparer = new Comparer();
-        areas.Result[0].Should().Be(new ((int)AreaOfDataModels.Financial, 90), comparer);
-        areas.Result[1].Should().Be(new ((int)AreaOfDataModels.Trade, 50), comparer);
-        areas.Result[2].Should().Be(new ((int)AreaOfDataModels.CRM, 20), comparer);
-        areas.Result[3].Should().Be(new ((int)AreaOfDataModels.HrAndPayroll, 10), comparer);
+        var failedCount = 0;
+        const int repeats = 10;
+        for (var repeat = 0; repeat < repeats; ++repeat)
+        {
+            var kernel = GetKernel();
+            var areas = BiPlugin.GetAreasConfidence(
+                "księgowość i finanse", BiPlugin.GetAreas(),
+                kernel);
+            var result = areas.Result.OrderByDescending(x => x.Confidence).ToArray();
+            try
+            {
+                result.Should().HaveCount(4);
+                var comparer = new Comparer();
+                result[0].Should().Be(new((int)AreaOfDataModels.Financial, 90), comparer);
+                result[1].Should().Be(new((int)AreaOfDataModels.Trade, 50), comparer);
+                result[2].Should().Be(new((int)AreaOfDataModels.CRM, 20), comparer);
+                result[3].Should().Be(new((int)AreaOfDataModels.HrAndPayroll, 10), comparer);
+            }
+            catch (AssertionException)
+            {
+                failedCount++;
+            }
+        }
+        Assert.AreEqual(0, failedCount, $"Passed: {repeats - failedCount}/{repeats}");
     }
 
     [Test]
