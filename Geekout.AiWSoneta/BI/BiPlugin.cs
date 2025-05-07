@@ -71,10 +71,12 @@ sealed class BiPlugin
                            """
             }
         );
-
+        // mimo ze wymuszamy typ zwrotki, odpowiedz jest stringowa, musimy ja zdeserializowac
         return kernel.InvokeWithJsonDeserializationAsync<ConfidenceResult>(
             function,
             new(
+                // mozemy poprosic model o typ zwrotki
+                // model sam domysli sie co oznacza pole w recordzie na podstawie kontekstu zapytania
 #pragma warning disable SKEXP0010
                 new OpenAIPromptExecutionSettings
                 {
