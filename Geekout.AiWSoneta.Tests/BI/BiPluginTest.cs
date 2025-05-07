@@ -31,6 +31,14 @@ public class BiPluginTest
             try
             {
                 result.Should().HaveCount(4);
+                TestContext.Out.WriteLine(repeat);
+                for (var index = 0; index < result.Length; index++)
+                {
+                    var itemConfidence = result[index];
+                    TestContext.Out.WriteLine(
+                        $"{index}. {((AreaOfDataModels)itemConfidence.Id).ToString()} - {itemConfidence.Confidence}");
+                }
+
                 var comparer = new Comparer();
                 result[0].Should().Be(new((int)AreaOfDataModels.Financial, 90), comparer);
                 result[1].Should().Be(new((int)AreaOfDataModels.Trade, 50), comparer);
