@@ -4,7 +4,7 @@ namespace Geekout.AiWSoneta.Poczta.Abstract;
 
 public interface IGenerateEmailMessageService
 {
-    WiadomoscEmail OrdersData(string[] numeryZamowienia, string fromAddress, string msgTopic);
-    WiadomoscEmail DataOfAllOrders(string fromAddress, string msgTopic);
-    WiadomoscEmail UnrecognizedTypeOfRequest(string fromAddress, string msgTopic);
+    WiadomoscEmail OrdersData(string[] numeryZamowienia, string toAddress, string fromAddress, string msgTopic);
+    WiadomoscEmail DataOfAllOrders(string toAddress, string fromAddress, string msgTopic);
+    WiadomoscEmail UnrecognizedTypeOfRequest(string toAddress, string fromAddress, string msgTopic);
 }

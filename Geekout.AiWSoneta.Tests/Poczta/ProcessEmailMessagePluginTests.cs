@@ -79,7 +79,8 @@ public class ProcessEmailMessagePluginTests
                                              No hejka, co tam się z Tobą dzieje? Skąd to zwątpienie? Dlaczego chcesz teraz się poddać, tylko dlatego, że raz czy drugi Ci nie wyszło? To nie jest żaden powód. Musisz iść i walczyć. Osiągniesz cel. Prędzej czy później go osiągniesz, ale musisz iść do przodu, przeć, walczyć o swoje. Nie ważne, że wszystko dookoła jest przeciwko Tobie. Najważniejsze jest to, że masz tutaj wole zwycięstwa. To się liczy. Każdy może osiągnąć cel, nie ważne czy taki czy taki, ale trzeba iść i walczyć. To teraz masz trzy sekundy żeby się otrąsnąć, powiedzieć sobie "dobra basta", pięścią w stół, idę to przodu i osiągam swój cel. Pozdro.
                                              """;
 
-    private const string EmailAddress = "jan.nowak@gmail.com";
+    private const string FromEmailAddress = "jan.nowak@gmail.com";
+    private const string ToEmailAddress = "anna.kowalska@gmail.com";
     private const string EmailTopic = "Zapytanie";
 
     private static Kernel GetKernel(IGenerateEmailMessageService generateEmailMessageMock,
@@ -103,14 +104,14 @@ public class ProcessEmailMessagePluginTests
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
         // Act
-        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, EmailAddress, EmailTopic).GetAwaiter().GetResult();
+        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, FromEmailAddress, ToEmailAddress,EmailTopic).GetAwaiter().GetResult();
 
         // Assert
         generateEmailMessageMock
             .Received(1)
-            .OrdersData(Arg.Is<string[]>(x => x.SequenceEqual(expectedOrderIds)), EmailAddress, EmailTopic);
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default, default);
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default, default);
+            .OrdersData(Arg.Is<string[]>(x => x.SequenceEqual(expectedOrderIds)), ToEmailAddress, FromEmailAddress, EmailTopic);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default,default, default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default, default, default);
     }
 
     [TestCase(Prompt3)]
@@ -122,14 +123,14 @@ public class ProcessEmailMessagePluginTests
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
         // Act
-        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, EmailAddress, EmailTopic).GetAwaiter().GetResult();
+        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, FromEmailAddress, ToEmailAddress, EmailTopic).GetAwaiter().GetResult();
 
         // Assert
         generateEmailMessageMock
             .Received(1)
-            .DataOfAllOrders(Arg.Is<string>(x => x.Equals(EmailAddress)), Arg.Is<string>(x => x.Equals(EmailTopic)));
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default,default,default);
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default,default);
+            .DataOfAllOrders(Arg.Is<string>(x => x.Equals(ToEmailAddress)), Arg.Is<string>(x => x.Equals(FromEmailAddress)), Arg.Is<string>(x => x.Equals(EmailTopic)));
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default,default,default,default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().UnrecognizedTypeOfRequest(default,default,default);
     }
 
     [TestCase(NonRelatedPrompt1)]
@@ -142,31 +143,33 @@ public class ProcessEmailMessagePluginTests
         var kernel = GetKernel(generateEmailMessageMock, commitEmailMessageMock);
 
         // Act
-        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, EmailAddress, EmailTopic).GetAwaiter().GetResult();
+        ProcesujWiadomoscEmailWorker.InvokeKernel(kernel, prompt, FromEmailAddress, ToEmailAddress,EmailTopic).GetAwaiter().GetResult();
 
         // Assert
         generateEmailMessageMock
             .Received(1)
-            .UnrecognizedTypeOfRequest(Arg.Is<string>(x => x.Equals(EmailAddress)), Arg.Is<string>(x => x.Equals(EmailTopic)));
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default, default, default);
-        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default, default);
+            .UnrecognizedTypeOfRequest(Arg.Is<string>(x => x.Equals(ToEmailAddress)), 
+                Arg.Is<string>(x => x.Equals(FromEmailAddress)),
+                Arg.Is<string>(x => x.Equals(EmailTopic)));
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().OrdersData(default,default, default, default);
+        generateEmailMessageMock.DidNotReceiveWithAnyArgs().DataOfAllOrders(default,default, default);
     }
 
     private static IGenerateEmailMessageService GetSpeakingMockGenerateEmailMessageService()
     {
         var generateEmailMessageMock = Substitute.For<IGenerateEmailMessageService>();
         generateEmailMessageMock
-            .When(x => x.DataOfAllOrders(Arg.Any<string>(), Arg.Any<string>()))
+            .When(x => x.DataOfAllOrders(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
             .Do(x => TestContext.Out.WriteLine("uruchomiono generowanie wiadomości dt. wszystkich zamówień"));
         generateEmailMessageMock
-            .When(x => x.OrdersData(Arg.Any<string[]>(), Arg.Any<string>(), Arg.Any<string>()))
+            .When(x => x.OrdersData(Arg.Any<string[]>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
             .Do(x =>
             {
                 TestContext.Out.WriteLine("uruchomiono generowanie wiadomości dt. zamówień: {0}",
                     string.Join(", ", (string[])x.Args()[0]) );
             });
         generateEmailMessageMock
-            .When(x => x.UnrecognizedTypeOfRequest(Arg.Any<string>(), Arg.Any<string>()))
+            .When(x => x.UnrecognizedTypeOfRequest(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
             .Do(x => TestContext.Out.WriteLine("generowanie wiadomości dt. nierozpoznania charakteru zapytania"));
         return generateEmailMessageMock;
     }

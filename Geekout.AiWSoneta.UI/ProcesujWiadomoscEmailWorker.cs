@@ -34,32 +34,41 @@ public class ProcesujWiadomoscEmailWorker
     [Action("Procesuj wiadomość", Target = ActionTarget.Menu, Mode = ActionMode.SingleSession, Priority = 3)]
     public void Worker()
     {
-        var functionResult = InvokeKernel(BuildKernel(), WiadomoscEmail.Tresc, WiadomoscEmail.Od, WiadomoscEmail.Temat).GetAwaiter().GetResult();
+        var functionResult = InvokeKernel(BuildKernel(), WiadomoscEmail.Tresc, WiadomoscEmail.Od, 
+            WiadomoscEmail.Do, WiadomoscEmail.Temat).GetAwaiter().GetResult();
     }
 
-    internal static Task<FunctionResult> InvokeKernel(Kernel kernel, string tresc, string od, string temat)
+    internal static Task<FunctionResult> InvokeKernel(Kernel kernel, string tresc, string nadawca, string odbiorca, string temat)
     {
         var options = new FunctionChoiceBehaviorOptions
         { AllowConcurrentInvocation = false, AllowParallelCalls = false };
         var settings = new OpenAIPromptExecutionSettings
         { FunctionChoiceBehavior = FunctionChoiceBehavior.Required(options: options) };
-        var promptTemplate = kernel.CreateFunctionFromPrompt(
-            new PromptTemplateConfig("""
-            Poniżej znajduje się wiadomość e-mail od użytkownika. 
-            Jeśli to możliwe, przetwórz ją zgodnie z intencją użytkownika.
-            Temat wiadomości: {{$msgTopic}}
-            Adres nadawcy: {{$fromAddress}}
-            Wiadomość e-mail: {{$emailMessage}}
-            """.TranslateIgnore()));
+        var promptTemplate = GetKernelFunction(kernel);
         var functionResult = kernel.InvokeAsync(promptTemplate,
             new KernelArguments(settings)
             {
                 ["emailMessage"] = tresc,
-                ["fromAddress"] = od,
+                ["toAddress"] = odbiorca,
+                ["fromAddress"] = nadawca,
                 ["msgTopic"] = temat
             }
         );
         return functionResult;
+    }
+
+    private static KernelFunction GetKernelFunction(Kernel kernel)
+    {
+        var promptTemplate = kernel.CreateFunctionFromPrompt(
+            new PromptTemplateConfig("""
+                                     Poniżej znajduje się wiadomość e-mail od użytkownika. 
+                                     Jeśli to możliwe, przetwórz ją zgodnie z intencją użytkownika.
+                                     Temat wiadomości: {{$msgTopic}}
+                                     Adres nadawcy: {{$fromAddress}}
+                                     Adres odbiorcy: {{$toAddress}}
+                                     Wiadomość e-mail: {{$emailMessage}}
+                                     """.TranslateIgnore()));
+        return promptTemplate;
     }
 
     private Kernel BuildKernel()

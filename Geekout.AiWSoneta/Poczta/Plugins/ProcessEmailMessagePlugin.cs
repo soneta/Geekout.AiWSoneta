@@ -22,28 +22,33 @@ public class ProcessEmailMessagePlugin
     [Description("Odpowiada na zapytanie o informacje o zamówieniu, zwracając je na podstawie NUMERÓW ZAMÓWIENIA w zapytaniu")]
     [KernelFunction]
     public EmailMessageResponse OrdersData([Description("NUMERY ZAMÓWIENIA z zapytania użytkownika")] string[] numeryZamowienia,
+        [Description("Adres odbiorcy wiadomości email")] string toAddress,
         [Description("Adres nadawcy wiadomości email")] string fromAddress,
         [Description("Temat wiadomości email")] string msgTopic)
     {
-        var email = _generateMailService.OrdersData(numeryZamowienia,fromAddress, msgTopic);
+        var email = _generateMailService.OrdersData(numeryZamowienia, toAddress,fromAddress, msgTopic);
         return _commitMailService.CommitMail(email);
     }
 
     [Description("Odpowiada na zapytanie o informacje o zamówienia, zwracając w wiadomości dane wszystkich zamówień na podstawie danych nadawcy")]
     [KernelFunction]
-    public EmailMessageResponse DataOfAllOrders([Description("Adres nadawcy wiadomości email")] string fromAddress,
+    public EmailMessageResponse DataOfAllOrders(
+        [Description("Adres odbiorcy wiadomości email")] string toAddress,
+        [Description("Adres nadawcy wiadomości email")] string fromAddress,
         [Description("Temat wiadomości email")] string msgTopic)
     {
-        var email = _generateMailService.DataOfAllOrders(fromAddress, msgTopic);
+        var email = _generateMailService.DataOfAllOrders(toAddress,fromAddress, msgTopic);
         return _commitMailService.CommitMail(email);
     }
 
     [Description("Odpowiada nadawcy w przypadku zadania nierozpoznanego typu zapytania")]
     [KernelFunction]
-    public EmailMessageResponse UnrecognizedTypeOfRequest([Description("Adres nadawcy wiadomości email")] string fromAddress,
+    public EmailMessageResponse UnrecognizedTypeOfRequest(
+        [Description("Adres odbiorcy wiadomości email")] string toAddress,
+        [Description("Adres nadawcy wiadomości email")] string fromAddress,
         [Description("Temat wiadomości email")] string msgTopic)
     {
-        var email = _generateMailService.UnrecognizedTypeOfRequest(fromAddress, msgTopic);
+        var email = _generateMailService.UnrecognizedTypeOfRequest(toAddress, fromAddress, msgTopic);
         return _commitMailService.CommitMail(email);
     }
 }

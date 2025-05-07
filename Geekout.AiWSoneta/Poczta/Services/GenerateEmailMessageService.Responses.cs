@@ -8,7 +8,7 @@ namespace Geekout.AiWSoneta.Poczta.Services;
 public partial class GenerateEmailMessageService
 {
     private static WiadomoscRobocza GetResponseForOrderId(string[] numeryZamowien, string infoForResponse,
-        string fromAddress, string msgTopic)
+        string toAddress, string fromAddress, string msgTopic)
     {
         var message = numeryZamowien.Length > 1
             ? """
@@ -24,12 +24,13 @@ public partial class GenerateEmailMessageService
         {
             Data = DateTime.Now,
             Tresc = message,
+            Od = toAddress,
             Do = fromAddress,
             Temat = "[ODP] {0}".TranslateFormat(msgTopic)
         };
     }
 
-    private static WiadomoscRobocza GetUnrecognizedMessage(string fromAddress, string msgTopic)
+    private static WiadomoscRobocza GetUnrecognizedMessage(string toAddress, string fromAddress, string msgTopic)
     {
         var message = """
                       Niestety, nie jestem w stanie automatycznie przetworzyć tej wiadomości. Spróbuj odpowiedzieć na nią ręcznie.
@@ -39,12 +40,13 @@ public partial class GenerateEmailMessageService
         {
             Data = DateTime.Now,
             Tresc = message,
+            Od = toAddress,
             Do = fromAddress,
             Temat = "[ODP][NIEUDANY] {0}".TranslateFormat(msgTopic)
         };
     }
 
-    private static WiadomoscRobocza SendResponseEveryOrder(string infoForResponse, string fromAddress, string msgTopic)
+    private static WiadomoscRobocza SendResponseEveryOrder(string infoForResponse, string toAddress, string fromAddress, string msgTopic)
     {
         var message = """
                       Nawiązując do poprzedniej wiadomości, przesyłam informacje dotyczące zamówień dla kontrahenta skojarzonego z twoim adresem email.
@@ -55,6 +57,7 @@ public partial class GenerateEmailMessageService
         {
             Data = DateTime.Now,
             Tresc = message,
+            Od = toAddress,
             Do = fromAddress,
             Temat = "[ODP] {0}".TranslateFormat(msgTopic)
         };

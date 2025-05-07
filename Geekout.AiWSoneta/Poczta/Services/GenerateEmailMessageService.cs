@@ -29,12 +29,12 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
 
     private ILogger Logger => _logger ??= _loggerFactory.CreateLogger(nameof(GenerateEmailMessageService));
 
-    public WiadomoscEmail DataOfAllOrders(string fromAddress, string msgTopic)
+    public WiadomoscEmail DataOfAllOrders(string toAddress, string fromAddress, string msgTopic)
     {
         WiadomoscEmail result;
         try
         {
-            result = DoGetDataOfAllOrders(fromAddress, msgTopic);
+            result = DoGetDataOfAllOrders(toAddress,fromAddress, msgTopic);
         }
         catch (Exception ex)
         {
@@ -46,12 +46,12 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
         return result;
     }
 
-    public WiadomoscEmail UnrecognizedTypeOfRequest(string fromAddress, string msgTopic)
+    public WiadomoscEmail UnrecognizedTypeOfRequest(string toAddress, string fromAddress, string msgTopic)
     {
         WiadomoscEmail result;
         try
         {
-            result = GenerateEmailMessageService.GetUnrecognizedMessage(fromAddress, msgTopic);
+            result = GetUnrecognizedMessage(toAddress, fromAddress, msgTopic);
         }
         catch (Exception ex)
         {
@@ -63,7 +63,7 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
         return result;
     }
 
-    public WiadomoscEmail OrdersData(string[] numeryZamowienia, string fromAddress, string msgTopic)
+    public WiadomoscEmail OrdersData(string[] numeryZamowienia, string toAddress, string fromAddress, string msgTopic)
     {
         WiadomoscEmail result;
         try
@@ -71,7 +71,7 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
             if (numeryZamowienia == null || numeryZamowienia.Length == 0)
                 return null;
 
-            result = DoGetOrdersData(numeryZamowienia, fromAddress, msgTopic);
+            result = DoGetOrdersData(numeryZamowienia, toAddress, fromAddress, msgTopic);
         }
         catch (Exception ex)
         {
@@ -88,17 +88,18 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
         Logger.Log(LogLevel.Information, "Wygenerowano następującą treść: {0}".Translate(), result.Tresc);
     }
 
-    private WiadomoscEmail DoGetDataOfAllOrders(string fromAddress, string msgTopic)
+    private WiadomoscEmail DoGetDataOfAllOrders(string toAddress, string fromAddress, string msgTopic)
     {
         var orders = GetOrdersByContact(fromAddress)?
             .Select(x => new GenerateEmailMessageService.OrderInfo(x)).ToArray();
         if (orders == null || orders.Length == 0) return null;
 
-        return GenerateEmailMessageService.SendResponseEveryOrder(JsonSerializer.Serialize(orders,
-            new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() }, WriteIndented = true }), fromAddress, msgTopic);
+        return SendResponseEveryOrder(JsonSerializer.Serialize(orders,
+            new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() }, WriteIndented = true }), 
+            toAddress, fromAddress, msgTopic);
     }
 
-    private WiadomoscRobocza DoGetOrdersData(string[] numeryZamowienia, string fromAddress, string msgTopic)
+    private WiadomoscRobocza DoGetOrdersData(string[] numeryZamowienia, string toAddress, string fromAddress,  string msgTopic)
     {
         var orders = GetOrdersByContact(fromAddress);
         var orderInfos = numeryZamowienia.Select(numerZamowienia =>
@@ -108,21 +109,21 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
                                                || dokHandlowy.Obcy.Numer == numerZamowienia);
             return orderWithNumerZamowienia is null
                 ? null
-                : new GenerateEmailMessageService.OrderInfo(orderWithNumerZamowienia);
+                : new OrderInfo(orderWithNumerZamowienia);
         }).Where(x => x is not null).ToArray();
         if (orderInfos.Length == 0) return null;
 
-        return GenerateEmailMessageService.GetResponseForOrderId(numeryZamowienia, JsonSerializer.Serialize(orderInfos,
+        return GetResponseForOrderId(numeryZamowienia, JsonSerializer.Serialize(orderInfos,
             new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() }, WriteIndented = true }
-        ), fromAddress, msgTopic);
+        ), toAddress, fromAddress, msgTopic);
     }
 
-    private IEnumerable<DokumentHandlowy> GetOrdersByEmailAddress(string adresEmail)
+    private IEnumerable<DokumentHandlowy> GetOrdersByEmailAddress(string emailAddress)
     {
         var crmModule = CRMModule.GetInstance(_session);
 
         var resultSearchForKontakt = crmModule.KontaktyOsoby.Rows.Cast<KontaktOsoba>()
-            .FirstOrDefault(x => x.EMAIL == adresEmail);
+            .FirstOrDefault(x => x.EMAIL == emailAddress);
 
         if (resultSearchForKontakt == null)
             return null;
