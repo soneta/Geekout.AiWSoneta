@@ -8,14 +8,14 @@ public partial class GenerateEmailMessageService
         string NumerZamowienia,
         StanDokumentuHandlowego Stan,
         PotwierdzenieDokumentuHandlowego Potwierdzenie,
-        string WartoscBrutto,
+        decimal WartoscBrutto,
         string TerminDostawy,
         string SposobDostawy, 
         int IloscPozycjiZamowienia)
     {
         internal OrderInfo(DokumentHandlowy dokumentHandlowy)
             : this(dokumentHandlowy.NumerPelnyZapisany, dokumentHandlowy.Stan,
-                dokumentHandlowy.Potwierdzenie, dokumentHandlowy.BruttoCy.ToString(), dokumentHandlowy.Dostawa.Termin.ToString(),
+                dokumentHandlowy.Potwierdzenie, dokumentHandlowy.BruttoCy.Value, dokumentHandlowy.Dostawa.Termin.ToString(),
                 dokumentHandlowy.Dostawa.Sposob, dokumentHandlowy.Pozycje.Count) { }
     }
 }
