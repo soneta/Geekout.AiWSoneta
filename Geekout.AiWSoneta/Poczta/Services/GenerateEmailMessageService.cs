@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Text.Unicode;
 using Geekout.AiWSoneta.Poczta.Abstract;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,7 @@ using Soneta.Business;
 using Soneta.CRM;
 using Soneta.Handel;
 using Soneta.Tools;
+using Soneta.Types;
 
 namespace Geekout.AiWSoneta.Poczta.Services;
 
@@ -20,12 +23,21 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
     private readonly ILoggerFactory _loggerFactory;
     private ILogger _logger;
 
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    { 
+        Converters = { new JsonStringEnumConverter() },
+        Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin,
+            UnicodeRanges.LatinExtendedA, UnicodeRanges.Latin1Supplement),
+        WriteIndented = true
+    };
+
     public GenerateEmailMessageService([NotNull] Session session,
         [NotNull] ILoggerFactory loggerFactory)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
+    private static Date NowMinusThreeMonths => new(DateTime.Now.AddMonths(-6));
 
     private ILogger Logger => _logger ??= _loggerFactory.CreateLogger(nameof(GenerateEmailMessageService));
 
@@ -91,12 +103,10 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
     private WiadomoscEmail DoGetDataOfAllOrders(string toAddress, string fromAddress, string msgTopic)
     {
         var orders = GetOrdersByContact(fromAddress)?
-            .Select(x => new GenerateEmailMessageService.OrderInfo(x)).ToArray();
+            .Where(IsValidOrder).Select(dokHandlowy => new OrderInfo(dokHandlowy)).ToArray();
         if (orders == null || orders.Length == 0) return null;
 
-        return SendResponseEveryOrder(JsonSerializer.Serialize(orders,
-            new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() }, WriteIndented = true }), 
-            toAddress, fromAddress, msgTopic);
+        return SendResponseEveryOrder(JsonSerializer.Serialize(orders, _jsonSerializerOptions), toAddress, fromAddress, msgTopic);
     }
 
     private WiadomoscRobocza DoGetOrdersData(string[] numeryZamowienia, string toAddress, string fromAddress,  string msgTopic)
@@ -105,18 +115,20 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
         var orderInfos = numeryZamowienia.Select(numerZamowienia =>
         {
             var orderWithNumerZamowienia = orders
-                .FirstOrDefault(dokHandlowy => dokHandlowy.NumerPelnyZapisany == numerZamowienia
-                                               || dokHandlowy.Obcy.Numer == numerZamowienia);
+                .FirstOrDefault(dokHandlowy => (dokHandlowy.NumerPelnyZapisany == numerZamowienia 
+                                                || dokHandlowy.Obcy.Numer == numerZamowienia)
+                                               && IsValidOrder(dokHandlowy));
             return orderWithNumerZamowienia is null
                 ? null
                 : new OrderInfo(orderWithNumerZamowienia);
         }).Where(x => x is not null).ToArray();
         if (orderInfos.Length == 0) return null;
 
-        return GetResponseForOrderId(numeryZamowienia, JsonSerializer.Serialize(orderInfos,
-            new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() }, WriteIndented = true }
-        ), toAddress, fromAddress, msgTopic);
+        return GetResponseForOrderId(numeryZamowienia, JsonSerializer.Serialize(orderInfos, _jsonSerializerOptions), toAddress, fromAddress, msgTopic);
     }
+
+    private static bool IsValidOrder(DokumentHandlowy dokHandlowy) 
+        => dokHandlowy.Dostawa.Termin.CompareTo(NowMinusThreeMonths) > 0;
 
     private IEnumerable<DokumentHandlowy> GetOrdersByEmailAddress(string emailAddress)
     {
@@ -132,7 +144,6 @@ public partial class GenerateEmailMessageService : IGenerateEmailMessageService
             crmModule.OsobyKontrahenci.WgOsobaKontaktowa[resultSearchForKontakt]
                 .Where(x => x.Kontrahent is Kontrahent)
                 .Select(x => x.Kontrahent as Kontrahent);
-
         var handelModule = HandelModule.GetInstance(_session);
         return resultKontrahenci.SelectMany(kontrahent => handelModule.DokHandlowe.WgKontrahent[kontrahent])
             .Where(x => x.Kategoria == KategoriaHandlowa.ZamówienieOdbiorcy);
