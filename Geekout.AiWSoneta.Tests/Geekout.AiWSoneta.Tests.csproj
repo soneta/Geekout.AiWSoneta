@@ -2,12 +2,17 @@
 <Project Sdk="Soneta.Sdk">
   <PropertyGroup>
     <TargetFramework>$(SonetaTestsTargetFramework)</TargetFramework>
+    <UserSecretsId>Soneta.Test.Configuration</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="7.2.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.47.0-preview" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Geekout.AiWSoneta.UI\Geekout.AiWSoneta.UI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="RAG\Utils\doswiadczenie.xml" />
   </ItemGroup>
 
 </Project>
