@@ -31,7 +31,7 @@ public class PocztaPlugin
             Template = """
                        Utwórz streszczenie wiadomości e-mail, której treść znajdziesz poniżej:
                        '{{$emailContents}}'
-                       Temat wiadomości to: '{{$emailTopic}}'
+                       Streszczenie musi być co najwyżej dwuzdaniowe. W odpowiedzi zawrzyj jedynie treść streszczenia.
                        """
         };
 

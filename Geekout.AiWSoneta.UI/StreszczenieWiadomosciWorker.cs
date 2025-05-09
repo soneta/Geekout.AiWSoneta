@@ -3,6 +3,7 @@ using Geekout.AiWSoneta.Poczta.Plugins;
 using Geekout.AiWSoneta.UI;
 using Microsoft.SemanticKernel;
 using Soneta.Business;
+using Soneta.Business.UI;
 using Soneta.Core;
 using Soneta.Core.AI.Extensions;
 using Soneta.CRM;
@@ -27,7 +28,7 @@ public class StreszczenieWiadomosciWorker
     public WiadomoscEmail WiadomoscEmail { get; set; }
 
     [Action("Wygeneruj streszczenie", Target = ActionTarget.Menu, Mode = ActionMode.SingleSession, Priority = 2)]
-    public void GetSummary()
+    public MessageBoxInformation GetSummary()
     {
         var trescWiadomosci = WiadomoscEmail.Tresc.ToString();
         var tematWiadomosci = WiadomoscEmail.Temat;
@@ -37,6 +38,11 @@ public class StreszczenieWiadomosciWorker
         Log.WriteLine("Temat wiadomości: {0}".Translate(), tematWiadomosci);
         Log.WriteLine(string.Concat(Enumerable.Repeat("-",60)));
         Log.WriteLine(result);
+        return new MessageBoxInformation
+        {
+            Caption = "Streszczenie wiadomości EMAIL ID={0}".TranslateFormat(id),
+            Text = "Streszczenie: {0}".TranslateFormat(result)
+        };
     }
 
     private Kernel GetKernel()
