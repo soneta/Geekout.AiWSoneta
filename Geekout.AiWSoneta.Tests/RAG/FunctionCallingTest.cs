@@ -10,6 +10,9 @@ using Soneta.Core.AI.Extensions;
 
 namespace Geekout.AiWSoneta.Tests.RAG;
 
+/// <summary>
+/// Test demonstrujący Function Calling
+/// </summary>
 public class FunctionCallingTest : SemanticKernelTestBase
 {
 
@@ -20,15 +23,16 @@ public class FunctionCallingTest : SemanticKernelTestBase
    [TestCase("Podaj listę kontrahentów")]
    public async Task GetEmployeesList(string prompt)
    {
+      // Utworzenie kernela oraz dodanie pluginu z funkcją kernelową
       var builder = Kernel.CreateBuilder();
       builder.AddChatCompletion(Session, ServiceAiSymbol);
       builder.Services.AddLogging(loggingBuilder =>
          loggingBuilder.AddDebug()
             .SetMinimumLevel(LogLevel.Trace));
       builder.Plugins.AddFromType<PracownicyPlugin>();
-      
       var kernel = builder.Build(Session);
       
+      // Użycie modelu z ustawieniem automatycznego doboru funkcji
       var answer = await kernel.InvokePromptAsync(
          prompt,
          new KernelArguments(
