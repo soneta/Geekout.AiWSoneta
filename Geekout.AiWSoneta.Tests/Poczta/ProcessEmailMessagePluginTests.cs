@@ -4,14 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using NSubstitute;
 using NUnit.Framework;
-using Soneta.Test.Helpers;
 using Geekout.AiWSoneta.Poczta.Abstract;
 using Geekout.AiWSoneta.Poczta.Plugins;
+using Geekout.AiWSoneta.Tests.SemanticKernel.Utils;
+using Soneta.Core.AI.Extensions;
 
 namespace Geekout.AiWSoneta.Tests.Poczta;
 
 [TestFixture]
-public class ProcessEmailMessagePluginTests
+public class ProcessEmailMessagePluginTests : SemanticKernelTestBase
 {
     private const string Prompt1 = """
                                    Dear Company,
@@ -83,15 +84,15 @@ public class ProcessEmailMessagePluginTests
     private const string ToEmailAddress = "anna.kowalska@gmail.com";
     private const string EmailTopic = "Zapytanie";
 
-    private static Kernel GetKernel(IGenerateEmailMessageService generateEmailMessageMock,
+    private Kernel GetKernel(IGenerateEmailMessageService generateEmailMessageMock,
         ICommitEmailMessageService commitEmailMessageMock)
     {
         var builder = Kernel.CreateBuilder();
-        builder.AddTestChatCompletion();
+        builder.AddChatCompletion(Session, ServiceAiSymbol);
         builder.Services.AddSingleton<IGenerateEmailMessageService>(x => generateEmailMessageMock);
         builder.Services.AddSingleton<ICommitEmailMessageService>(x => commitEmailMessageMock);
         builder.Plugins.AddFromType<ProcessEmailMessagePlugin>();
-        return builder.Build();
+        return builder.Build(Session);
     }
 
     [TestCase(Prompt1, new[]{"ZAM-12143"})]

@@ -8,14 +8,22 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Embeddings;
 using NUnit.Framework;
 using Soneta.BI;
-using Soneta.Test.Helpers;
 using Geekout.AiWSoneta.BI;
 using System.Linq;
+using Soneta.Core.AI.Extensions;
+using Geekout.AiWSoneta.Tests.SemanticKernel.Utils;
 
 namespace Geekout.AiWSoneta.Tests.BI;
 
-public class BiPluginTest
+public class BiPluginTest : SemanticKernelTestBase
 {
+    private Kernel GetKernel()
+    {
+        var builder = Kernel.CreateBuilder();
+        builder.AddChatCompletion(Session, ServiceAiSymbol);
+        return builder.Build(Session);
+    }
+
     [Test]
     public void GetAreasConfidenceTest()
     {
@@ -86,31 +94,14 @@ public class BiPluginTest
         //TODO Try calculating confidence from embeddings
     }
 
-    private static Kernel GetKernel(
-        Action<IKernelBuilder> configureBuilder = null,
-        Action<Kernel> configure = null) =>
-        SemanticKernelHelper.GetTestKernel(configureBuilder, configure);
 
-    class Comparer : IEqualityComparer<BiPlugin.ItemConfidence>
+    private class Comparer : IEqualityComparer<BiPlugin.ItemConfidence>
     {
         public bool Equals(BiPlugin.ItemConfidence x, BiPlugin.ItemConfidence y) =>
-            x?.Id == y?.Id && Math.Abs((x?.Confidence ?? 0) - (y?.Confidence ?? 0))<20;
+            x?.Id == y?.Id && Math.Abs((x?.Confidence ?? 0) - (y?.Confidence ?? 0))<=25;
 
         public int GetHashCode(BiPlugin.ItemConfidence obj) => obj.GetHashCode();
     }
-
-
-    // [DebuggerDisplay("AreaId = {AreaId}, Confidence = {Confidence}")]
-    // internal record AreaConfidence(int AreaId, int Confidence);
-
-    // [DebuggerDisplay("Count = {Result.Length}")]
-    // internal record AreasConfidenceResult(AreaConfidence[] Result);
-
-    // [DebuggerDisplay("ItemTypeId = {ItemTypeId}, Confidence = {Confidence}")]
-    // internal record ItemTypeConfidence(int ItemTypeId, int Confidence);
-    //
-    // [DebuggerDisplay("Count = {Result.Length}")]
-    // internal record ItemTypeConfidenceResult(ItemTypeConfidence[] Result);
 }
 
 

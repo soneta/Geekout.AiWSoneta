@@ -1,12 +1,14 @@
 ﻿using System.Threading.Tasks;
 using Geekout.AiWSoneta.Poczta.Plugins;
+using Geekout.AiWSoneta.Tests.SemanticKernel.Utils;
+using Microsoft.SemanticKernel;
 using NUnit.Framework;
-using Soneta.Test.Helpers;
+using Soneta.Core.AI.Extensions;
 
 namespace Geekout.AiWSoneta.Tests.Poczta
 {
     [TestFixture]
-    public class PocztaPluginTests
+    public class PocztaPluginTests : SemanticKernelTestBase
     {
         private const string MessageContent1 = """
                                                Drogi Kontrahencie,
@@ -39,9 +41,10 @@ namespace Geekout.AiWSoneta.Tests.Poczta
         [TestCase(MessageTopic2, MessageContent2)]
         public async Task Test_Email1(string testEmailTopic, string testEmailContent)
         {
-
+            var builder = Kernel.CreateBuilder();
+            builder.AddChatCompletion(Session, ServiceAiSymbol);
             var result = await PocztaPlugin.GetEmailSummary(testEmailContent, testEmailTopic,
-                SemanticKernelHelper.GetTestKernel());
+                builder.Build(Session));
             TestContext.Out.WriteLine(result);
         }
     }
