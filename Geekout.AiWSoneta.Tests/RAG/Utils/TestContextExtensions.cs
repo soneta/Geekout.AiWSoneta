@@ -56,9 +56,8 @@ public static class TestContextExtensions
             
         }
     }
-    public static void ToTestOutput(this IEnumerable<string> contents)
+    public static void ToTestOutput(this IEnumerable<string> contents, string comment)
     {
-        foreach (var content in contents) 
-            Out.WriteLine($"- {content}");
+        Out.WriteLine($"{comment}: {string.Join(',', contents)}");
     }
 }

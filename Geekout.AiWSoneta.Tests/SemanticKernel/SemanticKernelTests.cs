@@ -56,7 +56,7 @@ public class SemanticKernelTests : SemanticKernelTestBase
     }
 
     /// <summary>
-    /// Przykład użycia Semantic Kernel z Azure OpenAI z użyciem rozszerzeń obiektu biznesowego SystemZewnetrzny.
+    /// Przykład użycia Semantic Kernel z Azure OpenAI z użyciem obiektu biznesowego SystemZewnetrzny.
     /// </summary>
     [Test]
     public void Create_Kernel_With_ExternalSystem()

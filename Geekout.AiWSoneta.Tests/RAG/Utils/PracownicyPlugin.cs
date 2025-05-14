@@ -27,7 +27,7 @@ public sealed class PracownicyPlugin(Session session)
                 true)
             .Cast<Pracownik>()
             .Select(GetKodPracownika).ToList();
-        kodPracownikówList.ToTestOutput();
+        kodPracownikówList.ToTestOutput($"{nameof(GetPracownicy)}({kodWydzialu})");
         return kodPracownikówList;
     }
 
