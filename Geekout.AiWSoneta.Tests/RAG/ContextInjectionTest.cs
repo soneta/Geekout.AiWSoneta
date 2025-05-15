@@ -26,7 +26,7 @@ public class ContextInjectionTest : RagTestBase
         builder.AddChatCompletion(Session, ServiceAiSymbol);
         var kernel = builder.Build(Session);
         
-        // Pobranie informacji o doświadczeniu pracownika
+        // Pobranie informacji o doświadczeniu pracownika(cecha)
         var employeeData = Session.GetKadry().Pracownicy.WgKodu["006"].ToEmployeeData();
         
         // Przygotowanie argumentów dla kernela

@@ -73,7 +73,7 @@ public class VectorSearchWithFunctionCallingAndAiTest : RagTestBase
         // Prompt dla modelu AI z wyszukanymi pracownikami jako kontekst
         var prompt = 
             """
-             Jeżeli w sekcji zapytanie użytkownika występuje wskazanie wydziału, 
+             Jeżeli w sekcji zapytanie użytkownika występuje wskazanie wydziału,
               pobierz listę kodów pracowników tego wydziału.
              Na podstawie zapytania użytkownika i dostępnych informacji o pracownikach w sekcji Pracownicy przeanalizuj,
               którzy pracownicy spełniają podane kryteria.

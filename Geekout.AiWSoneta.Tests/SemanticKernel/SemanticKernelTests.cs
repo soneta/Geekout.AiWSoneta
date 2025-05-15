@@ -77,6 +77,12 @@ public class SemanticKernelTests : SemanticKernelTestBase
         var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
     }
     
+    /// <summary>
+    /// Przykład użycia Semantic Kernel wraz z rozszerzeniami Soneta
+    /// AddChatCompletion - automatyczne dodawanie serwisów AI na podstawie symbolu systemu zewnętrznego
+    /// Build(Session) - integracja kernel'a z logiką biznesową Soneta,
+    ///     pozwalająca na automatyczne dostarczanie zależności biznesowych dla plugin'ów i innych serwisów
+    /// </summary>
     [Test]
     public async Task Create_Kernel_With_ExternalSystem_And_Extensions()
     {
@@ -86,6 +92,7 @@ public class SemanticKernelTests : SemanticKernelTestBase
         builder.AddChatCompletion(Session, ServiceAiSymbol);
         // Dodajemy plugin, który ma zależności biznesowe
         builder.Plugins.AddFromType<SamplePlugin>();
+        // Jeżeli chcemy korzystać z logiki biznesowej to używamy rozszerzenia Build z Session
         var kernel = builder.Build(Session);
 
         // Standardowo mamy do dyspozycji wszystkie serwisy i metody kernela np IChatCompletionService
